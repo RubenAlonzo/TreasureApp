@@ -1,0 +1,60 @@
+﻿@page "/mapa"
+@using Microsoft.AspNetCore.Identity;
+@using System.Linq;
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<Usuario> UserManager
+@inject IJSRuntime js
+@inject ApplicationDbContext context
+
+
+<div id="mapid"></div>
+
+
+@code{
+
+    Usuario usr;
+    List<Tesoro> tesoros;
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LogUsername();
+        tesoros = (from c in context.Tesoros
+                   where c.User == usr
+                   select c).ToList();
+
+    }
+
+    private async Task LogUsername()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            usr = await UserManager.GetUserAsync(user);
+        }
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            await js.InvokeVoidAsync("iniciarMapa");
+            if (tesoros.Count > 0)
+            {
+                foreach (var i in usr.Tesoros)
+                {
+                    //nombre,descripcion, lugar, fecha,valor, ref, lat, lon
+                    await js.InvokeVoidAsync("agregarMarcadores", i.Name,i.Description,i.Place,i.Value, i.Latitude, i.Longitude);
+                }
+            }
+
+        }
+    }
+
+
+}

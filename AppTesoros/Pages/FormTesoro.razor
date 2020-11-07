@@ -1,0 +1,108 @@
+﻿@page "/formTesoro"
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<Usuario> UserManager
+@inject ApplicationDbContext context
+@inject IJSRuntime js
+
+
+<h2>Add a new treasure</h2>
+<br />
+<EditForm Model="tesoro" OnValidSubmit="Enviar">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <ValidationSummary></ValidationSummary>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label>Name:</label>
+                <InputText class="form-control" placeholder="Treasure name" @bind-Value="tesoro.Name"></InputText>
+            </div>
+            <div class="form-group">
+                <label>Description:</label>
+                <InputTextArea class="form-control" placeholder="Description of the treasure" @bind-Value="tesoro.Description"></InputTextArea>
+            </div>
+            <div class="form-group">
+                <label>Date:</label>
+                <InputDate class="form-control" @bind-Value="tesoro.Date"></InputDate>
+            </div>
+            <div class="form-group">
+                <label>Value:</label>
+                <InputNumber class="form-control" placeholder="Monetary value" @bind-Value="tesoro.Value"></InputNumber>
+            </div>
+            <div class="form-group">
+                <label>Url:</label>
+                <InputText class="form-control" placeholder="Url reference link" @bind-Value="tesoro.RefUrl"></InputText>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <div class="form-group">
+                <label>Place:</label>
+                <InputText class="form-control" placeholder="Where is it?" @bind-Value="tesoro.Place"></InputText>
+            </div>
+            <div class="form-group">
+                <label>Latitude</label>
+                <InputNumber class="form-control" placeholder="Latitude" @bind-Value="tesoro.Latitude"></InputNumber>
+                </div>
+            <div class="form-group">
+                <label>Longitude</label>
+                <InputNumber class="form-control" placeholder="Longitude" @bind-Value="tesoro.Longitude"></InputNumber>
+            </div>
+            <br />
+            <div class="form-group col-sm-4 ">
+                <input type="submit" class="btn btn-success" value="Save treasure" />
+            </div>
+
+        </div>
+    </div>
+</EditForm>
+
+
+
+@code
+{
+    Tesoro tesoro;
+
+    Usuario usr;
+
+    private async Task LogUsername()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            usr = await UserManager.GetUserAsync(user);
+        }
+    }
+
+    private async Task Enviar()
+    {
+        try
+        {
+            tesoro.User = usr;
+            context.Add(tesoro);
+            context.Update(usr);
+            context.SaveChanges();
+            await js.InvokeVoidAsync("notificacion", "Treasure has been saved succesfully!");
+            tesoro = new Tesoro();
+            tesoro.Date = DateTime.Now;
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        tesoro = new Tesoro();
+        tesoro.Date = DateTime.Now;
+        await LogUsername();
+    }
+
+
+
+}

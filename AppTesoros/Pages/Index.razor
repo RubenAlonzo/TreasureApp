@@ -1,0 +1,86 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Identity
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<Usuario> UserManager
+@inject ApplicationDbContext context
+
+<h2>@msjInicial</h2>
+<br />
+
+<table class="table">
+    <thead class="thead-light">
+        <tr>
+            <th>No.</th>
+            <th>Name</th>
+            <th style="width:20%">Description</th>
+            <th>Place</th>
+            <th>Date</th>
+            <th style="width:12%">Value</th>
+            <th>Reference</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (Tesoro item in tesoros)
+        {
+            count++;
+            <tr>
+                <th>@count</th>
+                <td>@item.Name.</td>
+                <td>@item.Description</td>
+                <td>@item.Place</td>
+                <td>@item.Date.ToString("dd/MM/yyy")</td>
+                <td>@item.Value</td>
+                @{
+                    if (string.IsNullOrWhiteSpace(item.RefUrl) == true)
+                    {
+                        <td>No reference</td>
+                    }
+                    else
+                    {
+                        <td><a target="_blank" href="@item.RefUrl">Link reference</a></td>
+                    }
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+
+@code {
+
+    Usuario usr;
+    List<Tesoro> tesoros;
+    string msjInicial;
+    int count = 0;
+
+    protected async override Task OnInitializedAsync()
+    {
+        await LogUsername();
+        tesoros = (from c in context.Tesoros
+                   where c.User == usr
+                   select c).ToList();
+
+        if (tesoros.Count > 0)
+        {
+            msjInicial = $"Estos son tus tesoros, {usr.Nombre}!";
+        }
+        else
+        {
+            msjInicial = $"Aun no tienes tesoros {usr.Nombre}.";
+        }
+    }
+
+    private async Task LogUsername()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            usr = await UserManager.GetUserAsync(user);
+        }
+    }
+}

@@ -1,0 +1,38 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<Usuario> UserManager
+
+<AuthorizeView>
+    <Authorized>
+        <a class="oi oi-person" href="Identity/Account/Manage">     Hello, @usr.Nombre!</a>
+        <form method="post" action="Identity/Account/LogOut">
+            <button type="submit" class="nav-link btn btn-link">Log out</button>
+        </form>
+    </Authorized>
+    <NotAuthorized>
+        <a href="Identity/Account/Register">Register</a>
+        <a href="Identity/Account/Login">Log in</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+
+    Usuario usr;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LogUsername();
+    }
+
+    private async Task LogUsername()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            usr = await UserManager.GetUserAsync(user);
+        }
+    }
+}
